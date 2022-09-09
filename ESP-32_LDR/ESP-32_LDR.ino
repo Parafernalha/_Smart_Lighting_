@@ -2,9 +2,14 @@ int valorConvertido = 0;
 float outputPwm = 0;
 float valorAjuste = 0.2;
 
+int pinLed = 26;
+
 void setup() {
   pinMode(34, INPUT);
   Serial.begin(115200);
+  
+  ledcSetup(0, 5000, 8);
+  ledcAttachPin(pinLed, 0);
 }
 
 void loop() {
@@ -17,6 +22,8 @@ void loop() {
   if (valorConvertido < outputPwm) {
     outputPwm = outputPwm - valorAjuste; 
   }
+
+  ledcWrite(0, int(outputPwm)); 
   
   Serial.print(valorConvertido);
   Serial.print("---");
