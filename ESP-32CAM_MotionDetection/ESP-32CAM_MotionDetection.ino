@@ -28,7 +28,7 @@ void setup() {
 
 void loop() {
   detector.setPixelChangesThreshold(sensibilidade_AjusteCam); // Acionar o movimento quando pelo menos 10% dos pixels mudam de intensidade
-  detector.setIntensityChangeThreshold(10); // Sensibilidade considerando pelo menos 10 de 255 por pixel
+  detector.setIntensityChangeThreshold(10); // Sensibilidade considerando pelo menos 5 de 255 por pixel
   
   if (!camera.capture()) { // Confere se a camera está funcionando
     Serial.println(camera.getErrorMessage());
