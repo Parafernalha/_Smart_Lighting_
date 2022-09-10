@@ -8,7 +8,7 @@ Eloquent::Vision::Motion::Naive<largura_Cam, altura_Cam> detector;
 
 float sensibilidade_AjusteCam = 0.005;
 int contagem_AjusteCam = 1;
-int contagemMax_AjusteCam = 150;
+int contagemMax_AjusteCam = 50;
 
 void setup() {
   delay(4000);
@@ -46,13 +46,14 @@ void loop() {
     contagem_AjusteCam++;
   }
   else if (contagem_AjusteCam < contagemMax_AjusteCam + 1) {
+    sensibilidade_AjusteCam = sensibilidade_AjusteCam + 0.01;
     contagem_AjusteCam++;
-    sensibilidade_AjusteCam = sensibilidade_AjusteCam + 0.005;
   }
 
   if (detector.isMotionDetected()) {   // Se for detectado movimento, imprima as coordenadas para serial no formato JSON
     if (contagem_AjusteCam < contagemMax_AjusteCam) {
-      sensibilidade_AjusteCam = sensibilidade_AjusteCam + 0.005;
+      sensibilidade_AjusteCam = sensibilidade_AjusteCam + 0.01;
+      contagem_AjusteCam = 0;
     }
     detector.printAsJsonTo(Serial);
     Serial.println(sensibilidade_AjusteCam);
