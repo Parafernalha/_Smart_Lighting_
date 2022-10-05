@@ -1,12 +1,12 @@
 #include "eloquent.h" //Bibliotecas utilizadas
 #include "eloquent/vision/motion/naive.h"
 #include "eloquent/vision/camera/esp32/aithinker/gray/qqvga.h" // Resolução da camera para ESP32_CAM (vga = mais alta, qqvga = mais baixa)    
-#define largura_Cam 100 //Resolução de operação (Aumentar implica em melhor detecção e menor velocidade de operação)
-#define altura_Cam 80
+#define largura_Cam 160 //Resolução de operação (Aumentar implica em melhor detecção e menor velocidade de operação)
+#define altura_Cam 120
 
 Eloquent::Vision::Motion::Naive<largura_Cam, altura_Cam> detector;
 
-float sensibilidade_AjusteCam = 0.005;
+float sensibilidade_AjusteCam = 0.01;
 int contagem_AjusteCam = 1;
 int contagemMax_AjusteCam = 50;
 
