@@ -14,6 +14,7 @@ void setup() {
   delay(4000);
   Serial.begin(115200);
   pinMode(4, OUTPUT);
+  pinMode(12, OUTPUT);
 
   camera.setHighFreq(); // Ative a alta frequência para velocidade de transmissão rápida
 
@@ -37,6 +38,7 @@ void loop() {
   }
 
   digitalWrite(4, LOW);
+  digitalWrite(12, LOW);
 
   camera.image.resize<largura_Cam, altura_Cam>(); // Realizar detecção de movimento em imagem redimensionada para detecção rápida
   detector.update(camera.image);
@@ -58,6 +60,7 @@ void loop() {
     detector.printAsJsonTo(Serial);
     Serial.println(sensibilidade_AjusteCam);
     digitalWrite(4, HIGH);
+    digitalWrite(12, HIGH);
   }
 
   camera.free(); // liberar memória

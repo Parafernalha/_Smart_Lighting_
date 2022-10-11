@@ -3,17 +3,17 @@
 #include <DHT.h>
 #include <Firebase_ESP_Client.h>
 #include "addons/TokenHelper.h"
-#include "addons/RTDBHelper.h"                                                      //Inclusão de bibliotecas
+#include "addons/RTDBHelper.h"                                                     //Inclusão de bibliotecas
 
-#define WIFI_SSID "Sky"                                                         // Rede
+#define WIFI_SSID "Sky"                                                            // Rede
 #define WIFI_PASSWORD "51525354"                                                   // Senha da rede
-#define API_KEY "AIzaSyBqr0DXRi5J9T1JkWLteXZrz6uchfOCPXQ"                           // Firebase Key
-#define DATABASE_URL "https://jornadasextoperiodo-default-rtdb.firebaseio.com/"     // Firebase URL
+#define API_KEY "AIzaSyBqr0DXRi5J9T1JkWLteXZrz6uchfOCPXQ"                          // Firebase Key
+#define DATABASE_URL "https://jornadasextoperiodo-default-rtdb.firebaseio.com/"    // Firebase URL
 
-#define DHT_SENSOR_PIN  14                                                          // DHT11 sensor pin X
+#define DHT_SENSOR_PIN  14                                                         // DHT11 sensor pin X
 #define DHT_SENSOR_TYPE DHT11
 
-unsigned long sendDataPrevMillis = 0;                                               //Variáveis
+unsigned long sendDataPrevMillis = 0;                                              //Variáveis
 unsigned long sendDataPrevMillis2 = 0;
 float floatValue;
 bool signupOK = false;
@@ -77,18 +77,18 @@ void pinModePwm(int Pin, int setPin) {
 
 float pwmWriteSoft(float input, float output, float ajuste) {
   if (input > output) {
-    output = output + (1.00/ajuste);
+    output = output + (1.00 / ajuste);
   }
 
   if (input < output) {
-    output = output - (1.00/ajuste);
+    output = output - (1.00 / ajuste);
   }
   return output;
 }
 
 void SerialGeral(String text, float var) {
-   Serial.print(text);
-   Serial.println(var); 
+  Serial.print(text);
+  Serial.println(var);
 }
 
 void setup() {
@@ -99,15 +99,16 @@ void setup() {
   pinModePwm(26, 0);  // pin Led
   pinMode(33, INPUT); // pin Cam
   pinMode(34, INPUT); // pin LDR
+  pinMode(35, INPUT); // pin CAM
 }
 
 
 void loop() {
-  
+
   int lumens = map(analogRead(34), 0 , 4095, 255, 0);
   float humi  = dht_sensor.readHumidity();
   float tempC = dht_sensor.readTemperature();
-  
+
   if (Firebase.ready() && signupOK && (millis() - sendDataPrevMillis > 2000 || sendDataPrevMillis == 0)) {
     sendDataPrevMillis = millis();
     FirebaseSet("/L1/temp", String(tempC));
@@ -116,11 +117,12 @@ void loop() {
     FirebaseSet("/L1/Out1", String(outputPwm));
     get1 = FirebaseGet("/test/number").toInt();
   }
-  
+
   outputPwm = pwmWriteSoft(get1, outputPwm, 2);
   ledcWrite(0, outputPwm);
 
   SerialGeral("Saída do pwm para o led: ", outputPwm);
-  
+  SerialGeral("Entrada CAM: ", digitalRead(35));
+
   delay(10);
 }
