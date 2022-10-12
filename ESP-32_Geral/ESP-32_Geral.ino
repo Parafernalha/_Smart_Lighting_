@@ -5,7 +5,7 @@
 #include "addons/TokenHelper.h"
 #include "addons/RTDBHelper.h"                                                     //Inclusão de bibliotecas
 
-#define WIFI_SSID "Sky"                                                        // Rede
+#define WIFI_SSID "Sky"                                                            // Rede
 #define WIFI_PASSWORD "51525354"                                                   // Senha da rede
 #define API_KEY "AIzaSyBqr0DXRi5J9T1JkWLteXZrz6uchfOCPXQ"                          // Firebase Key
 #define DATABASE_URL "https://jornadasextoperiodo-default-rtdb.firebaseio.com/"    // Firebase URL
@@ -111,7 +111,7 @@ void loop() {
 
   if (Firebase.ready() && signupOK && (millis() - sendDataPrevMillis > 2000 || sendDataPrevMillis == 0)) {
     sendDataPrevMillis = millis();
-    FirebaseSet("/L1/temp", " ");
+    FirebaseSet("/L1/Out1", );
     get1 = FirebaseGet("/L1/number").toInt();
   }
 
