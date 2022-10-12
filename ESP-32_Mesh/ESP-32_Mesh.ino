@@ -1,32 +1,17 @@
-/*
-  Rui Santos
-  Complete project details at https://RandomNerdTutorials.com/esp-mesh-esp32-esp8266-painlessmesh/
-  
-  Permission is hereby granted, free of charge, to any person obtaining a copy
-  of this software and associated documentation files.
-  
-  The above copyright notice and this permission notice shall be included in all
-  copies or substantial portions of the Software.
-*/
-
 #include "painlessMesh.h"
 #include <Arduino_JSON.h>
 
-// MESH Details
-#define   MESH_PREFIX     "RNTMESH" //name for your MESH
-#define   MESH_PASSWORD   "MESHpassword" //password for your MESH
+#define   MESH_PREFIX     "Sky" //name for your MESH
+#define   MESH_PASSWORD   "51525354" //password for your MESH
 #define   MESH_PORT       5555 //default port
 
-//Number for this node
 int nodeNumber = 3;
 
-//String to send to other nodes with sensor readings
 String readings;
 
 Scheduler userScheduler; // to control your personal task
 painlessMesh  mesh;
 
-// User stub
 void sendMessage() ; // Prototype so PlatformIO doesn't complain
 String getReadings(); // Prototype for sending sensor readings
 
