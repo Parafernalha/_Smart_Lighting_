@@ -5,8 +5,8 @@
 #include "addons/TokenHelper.h"
 #include "addons/RTDBHelper.h"                                                     //Inclusão de bibliotecas
 
-#define WIFI_SSID "Sky"                                                            // Rede
-#define WIFI_PASSWORD "51525354"                                                   // Senha da rede
+#define WIFI_SSID "Amilton"                                                        // Rede
+#define WIFI_PASSWORD "contra619"                                                  // Senha da rede
 #define API_KEY "AIzaSyBqr0DXRi5J9T1JkWLteXZrz6uchfOCPXQ"                          // Firebase Key
 #define DATABASE_URL "https://jornadasextoperiodo-default-rtdb.firebaseio.com/"    // Firebase URL
 
@@ -111,11 +111,8 @@ void loop() {
 
   if (Firebase.ready() && signupOK && (millis() - sendDataPrevMillis > 2000 || sendDataPrevMillis == 0)) {
     sendDataPrevMillis = millis();
-    FirebaseSet("/L1/temp", String(tempC));
-    FirebaseSet("/L1/humi", String(humi));
-    FirebaseSet("/L1/lum", String(lumens));
-    FirebaseSet("/L1/Out1", String(outputPwm));
-    get1 = FirebaseGet("/test/number").toInt();
+    FirebaseSet("/L1/temp", " ");
+    get1 = FirebaseGet("/L1/number").toInt()*2,5;
   }
 
   outputPwm = pwmWriteSoft(get1, outputPwm, 2);
