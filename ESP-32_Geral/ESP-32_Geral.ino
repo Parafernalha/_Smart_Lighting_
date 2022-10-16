@@ -13,20 +13,28 @@
 #define DHT_SENSOR_PIN  14                                                         // DHT11 sensor pin X
 #define DHT_SENSOR_TYPE DHT11
 
-unsigned long sendDataPrevMillis = 0;                                              //Variáveis
-unsigned long sendDataPrevMillis2 = 0;
-float floatValue;
+#define pinLed 27
+#define pinLDR 12
+#define pinCAM 26
+
+                                            
+float floatValue;                                                                 //Variáveis
 bool signupOK = false;
 int output = 0;
 float outputPwm = 0;
 int outputPwm2 = 0;
 int x = 0;
 int get1 = 0;
-
+int lumens;
+float humi;
+float tempC;
 
 FirebaseData fbdo;
 FirebaseAuth auth;
 FirebaseConfig config;                                                              //Configurações do Firebase
+
+TaskHandle_t Task1;
+TaskHandle_t Task2;
 
 DHT dht_sensor(DHT_SENSOR_PIN, DHT_SENSOR_TYPE);                                    //Configurações DHT11
 
@@ -96,31 +104,65 @@ void setup() {
   dht_sensor.begin();
   connectWifi();
   connectFirebase();
-  pinModePwm(26, 0);  // pin Led
-  pinMode(33, INPUT); // pin Cam
-  pinMode(34, INPUT); // pin LDR
-  pinMode(35, INPUT); // pin CAM
+  pinModePwm(pinLed, 0);  // pin Led
+  pinMode(pinLDR, INPUT); // pin LDR
+  pinMode(pinCAM, INPUT); // pin CAM
+
+  xTaskCreatePinnedToCore(
+    Task1code,   /* Task function. */
+    "Task1",     /* name of task. */
+    10000,       /* Stack size of task */
+    NULL,        /* parameter of the task */
+    1,           /* priority of the task */
+    &Task1,      /* Task handle to keep track of created task */
+    0);          /* pin task to core 0 */
+  delay(500);
+
+  xTaskCreatePinnedToCore(
+    Task2code,   /* Task function. */
+    "Task2",     /* name of task. */
+    10000,       /* Stack size of task */
+    NULL,        /* parameter of the task */
+    1,           /* priority of the task */
+    &Task2,      /* Task handle to keep track of created task */
+    1);          /* pin task to core 1 */
+  delay(500);
+}
+
+
+void Task2code( void * pvParameters ) {
+  for (;;) {
+    
+    FirebaseSet("/L1/Out1", String(outputPwm));
+    FirebaseSet("/L1/temp", String(tempC));
+    FirebaseSet("/L1/humi", String(humi));
+    FirebaseSet("/L1/lumens", String(lumens));
+    get1 = FirebaseGet("/L1/number").toInt();
+    
+    delay(2000);
+    
+  }
+}
+
+
+void Task1code( void * pvParameters ) {
+  for (;;) {
+
+    lumens = map(analogRead(12), 0 , 4095, 255, 0);
+    humi  = dht_sensor.readHumidity();
+    tempC = dht_sensor.readTemperature();
+
+    outputPwm = pwmWriteSoft(get1, outputPwm, 2);
+    ledcWrite(0, outputPwm);
+
+    SerialGeral("Saída do pwm para o led: ", outputPwm);
+    SerialGeral("Saída de temp: ", tempC);
+    SerialGeral("Entrada CAM: ", digitalRead(12));
+    delay(10);
+  }
 }
 
 
 void loop() {
 
-  int lumens = map(analogRead(34), 0 , 4095, 255, 0);
-  float humi  = dht_sensor.readHumidity();
-  float tempC = dht_sensor.readTemperature();
-
-  if (Firebase.ready() && signupOK && (millis() - sendDataPrevMillis > 2000 || sendDataPrevMillis == 0)) {
-    sendDataPrevMillis = millis();
-    FirebaseSet("/L1/Out1", );
-    get1 = FirebaseGet("/L1/number").toInt();
-  }
-
-  outputPwm = pwmWriteSoft(get1, outputPwm, 2);
-  ledcWrite(0, outputPwm);
-
-  SerialGeral("Saída do pwm para o led: ", outputPwm);
-  //SerialGeral("Saída de lumens: ", lumens);
-  //SerialGeral("Entrada CAM: ", digitalRead(35));
-
-  delay(10);
 }
