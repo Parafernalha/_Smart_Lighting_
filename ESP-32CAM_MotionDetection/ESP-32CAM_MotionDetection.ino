@@ -59,7 +59,7 @@ void loop() {
     }
     detector.printAsJsonTo(Serial);
     Serial.println(sensibilidade_AjusteCam);
-    digitalWrite(4, HIGH);
+    //digitalWrite(4, HIGH);
     digitalWrite(12, HIGH);
   }
 

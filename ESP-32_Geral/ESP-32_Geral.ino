@@ -2,13 +2,15 @@
 #include <WiFi.h>
 #include <DHT.h>
 #include <Firebase_ESP_Client.h>
-#include "addons/TokenHelper.h"
-#include "addons/RTDBHelper.h"                                                     //Inclusão de bibliotecas
+#include <addons/TokenHelper.h>
+#include <addons/RTDBHelper.h>                                              //Inclusão de bibliotecas
 
 #define WIFI_SSID "Sky"                                                            // Rede
 #define WIFI_PASSWORD "51525354"                                                   // Senha da rede
 #define API_KEY "AIzaSyBqr0DXRi5J9T1JkWLteXZrz6uchfOCPXQ"                          // Firebase Key
 #define DATABASE_URL "https://jornadasextoperiodo-default-rtdb.firebaseio.com/"    // Firebase URL
+#define USER_EMAIL "kalebebm8@gmail.com"
+#define USER_PASSWORD "123456"
 
 #define DHT_SENSOR_PIN  14                                                         // DHT11 sensor pin X
 #define DHT_SENSOR_TYPE DHT11
@@ -17,7 +19,8 @@
 #define pinLDR 12
 #define pinCAM 26
 
-                                            
+
+unsigned long sendDataPrevMillis = 0;
 float floatValue;                                                                 //Variáveis
 bool signupOK = false;
 int output = 0;
@@ -25,9 +28,9 @@ float outputPwm = 0;
 int outputPwm2 = 0;
 int x = 0;
 int get1 = 0;
-int lumens;
-float humi;
-float tempC;
+int lumens = 0;
+float humi = 0;
+float tempC = 0;
 
 FirebaseData fbdo;
 FirebaseAuth auth;
@@ -50,26 +53,27 @@ void connectWifi() {                                                            
 
 
 void connectFirebase() {                                                            // Função de conecção do Firebase
+  Serial.printf("Firebase Client v%s\n\n", FIREBASE_CLIENT_VERSION);
+
   config.api_key = API_KEY;
+  auth.user.email = USER_EMAIL;
+  auth.user.password = USER_PASSWORD;
   config.database_url = DATABASE_URL;
-  if (Firebase.signUp(&config, &auth, "", "")) {
-    Serial.println("ok");
-    signupOK = true;
-  }
-  else {
-    Serial.printf("%s\n", config.signer.signupError.message.c_str());
-  }
   config.token_status_callback = tokenStatusCallback;
+
+  fbdo.setResponseSize(2048);
+
   Firebase.begin(&config, &auth);
   Firebase.reconnectWiFi(true);
+  Firebase.setDoubleDigits(5);
+
+  config.timeout.serverResponse = 10 * 1000;
 }
 
 
 String FirebaseGet(String caminho) {                                               // Função Leitura do Firebase
-  if (Firebase.RTDB.getInt(&fbdo, caminho)) {
-    if (fbdo.dataType() == "string") {
-      return fbdo.stringData();
-    }
+  if (Firebase.RTDB.getString(&fbdo, caminho)) {
+    return fbdo.to<const char *>();
   }
 }
 
@@ -78,10 +82,12 @@ void FirebaseSet(String caminho, String Value) {                                
   if (Firebase.RTDB.setString(&fbdo, caminho, Value)) {}
 }
 
+
 void pinModePwm(int Pin, int setPin) {
   ledcSetup(setPin, 5000, 8);
   ledcAttachPin(Pin, setPin);
 }
+
 
 float pwmWriteSoft(float input, float output, float ajuste) {
   if (input > output) {
@@ -94,10 +100,12 @@ float pwmWriteSoft(float input, float output, float ajuste) {
   return output;
 }
 
-void SerialGeral(String text, float var) {
+
+void SerialGeral(String text, String var1) {
   Serial.print(text);
-  Serial.println(var);
+  Serial.println(var1);
 }
+
 
 void setup() {
   Serial.begin(115200);
@@ -132,15 +140,20 @@ void setup() {
 
 void Task2code( void * pvParameters ) {
   for (;;) {
-    
+
     FirebaseSet("/L1/Out1", String(outputPwm));
     FirebaseSet("/L1/temp", String(tempC));
     FirebaseSet("/L1/humi", String(humi));
     FirebaseSet("/L1/lumens", String(lumens));
     get1 = FirebaseGet("/L1/number").toInt();
+
+    SerialGeral("Saída do pwm para o led: ", String(outputPwm));
+    SerialGeral("Saída de temp: ", String(tempC));
+    SerialGeral("Saída de humi: ", String(humi));
+    SerialGeral("Saída de LDR: ", String(lumens));
+    SerialGeral("Entrada CAM: ", String(digitalRead(26)));
     
-    delay(2000);
-    
+    delay(1000);
   }
 }
 
@@ -148,16 +161,13 @@ void Task2code( void * pvParameters ) {
 void Task1code( void * pvParameters ) {
   for (;;) {
 
-    lumens = map(analogRead(12), 0 , 4095, 255, 0);
+    lumens = analogRead(12);
     humi  = dht_sensor.readHumidity();
     tempC = dht_sensor.readTemperature();
 
     outputPwm = pwmWriteSoft(get1, outputPwm, 2);
     ledcWrite(0, outputPwm);
 
-    SerialGeral("Saída do pwm para o led: ", outputPwm);
-    SerialGeral("Saída de temp: ", tempC);
-    SerialGeral("Entrada CAM: ", digitalRead(12));
     delay(10);
   }
 }
