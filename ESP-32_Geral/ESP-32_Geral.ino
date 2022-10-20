@@ -12,11 +12,11 @@
 #define USER_EMAIL "kalebebm8@gmail.com"
 #define USER_PASSWORD "123456"
 
-#define DHT_SENSOR_PIN  14                                                         // DHT11 sensor pin X
+#define DHT_SENSOR_PIN  32                                                         // DHT11 sensor pin X
 #define DHT_SENSOR_TYPE DHT11
 
 #define pinLed 27
-#define pinLDR 12
+#define pinLDR 33
 #define pinCAM 26
 
 
@@ -40,7 +40,6 @@ TaskHandle_t Task1;
 TaskHandle_t Task2;
 
 DHT dht_sensor(DHT_SENSOR_PIN, DHT_SENSOR_TYPE);                                    //Configurações DHT11
-
 
 void connectWifi() {                                                                // Função de conecção do Wifi
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
@@ -137,41 +136,41 @@ void setup() {
   delay(500);
 }
 
-
-void Task2code( void * pvParameters ) {
-  for (;;) {
-
-    FirebaseSet("/L1/Out1", String(outputPwm));
-    FirebaseSet("/L1/temp", String(tempC));
-    FirebaseSet("/L1/humi", String(humi));
-    FirebaseSet("/L1/lumens", String(lumens));
-    get1 = FirebaseGet("/L1/number").toInt();
-
-    SerialGeral("Saída do pwm para o led: ", String(outputPwm));
-    SerialGeral("Saída de temp: ", String(tempC));
-    SerialGeral("Saída de humi: ", String(humi));
-    SerialGeral("Saída de LDR: ", String(lumens));
-    SerialGeral("Entrada CAM: ", String(digitalRead(26)));
-    
-    delay(1000);
-  }
-}
-
-
 void Task1code( void * pvParameters ) {
   for (;;) {
 
-    lumens = analogRead(12);
-    humi  = dht_sensor.readHumidity();
-    tempC = dht_sensor.readTemperature();
+    lumens = map(analogRead(33), 0 , 4095, 255, 0);
 
-    outputPwm = pwmWriteSoft(get1, outputPwm, 2);
+    if ( isnan(dht_sensor.readTemperature()) || isnan(dht_sensor.readHumidity())) {
+
+    } else {
+      humi  = dht_sensor.readHumidity();
+      tempC = dht_sensor.readTemperature();
+    }
+
+    outputPwm = pwmWriteSoft(get1, outputPwm, 1);
     ledcWrite(0, outputPwm);
+
+    SerialGeral("Saída do pwm para o led: ", String(outputPwm));
+    SerialGeral("Entrada LDR: ", String(lumens));
+    SerialGeral("Entrada temp: ", String(tempC));
+    SerialGeral("Entrada humi: ", String(humi));
 
     delay(10);
   }
 }
 
+void Task2code( void * pvParameters ) {
+  for (;;) {
+
+    FirebaseSet("/L1/temp", String(tempC));
+    FirebaseSet("/L1/humi", String(humi));
+    FirebaseSet("/L1/lumens", String(lumens));
+    get1 = FirebaseGet("/L1/number").toInt() * 2.55;
+
+    delay(2000);
+  }
+}
 
 void loop() {
 

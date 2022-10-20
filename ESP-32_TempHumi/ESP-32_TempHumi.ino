@@ -7,7 +7,7 @@
  */
 
 #include <DHT.h>
-#define DHT_SENSOR_PIN  14 // ESP32 pin GIOP21 connected to DHT11 sensor
+#define DHT_SENSOR_PIN  32 // ESP32 pin GIOP21 connected to DHT11 sensor
 #define DHT_SENSOR_TYPE DHT11
 
 DHT dht_sensor(DHT_SENSOR_PIN, DHT_SENSOR_TYPE);
