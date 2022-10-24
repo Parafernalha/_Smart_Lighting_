@@ -13,7 +13,7 @@ int contagemMax_AjusteCam = 50;
 void setup() {
   delay(4000);
   Serial.begin(115200);
-  pinMode(4, OUTPUT);
+  //pinMode(4, OUTPUT); //led
   pinMode(12, OUTPUT);
 
   camera.setHighFreq(); // Ative a alta frequência para velocidade de transmissão rápida
@@ -59,8 +59,9 @@ void loop() {
     }
     detector.printAsJsonTo(Serial);
     Serial.println(sensibilidade_AjusteCam);
-    //digitalWrite(4, HIGH);
-    digitalWrite(12, HIGH);
+    if (contagem_AjusteCam >= contagemMax_AjusteCam) {
+      digitalWrite(12, HIGH);
+    }
   }
 
   camera.free(); // liberar memória

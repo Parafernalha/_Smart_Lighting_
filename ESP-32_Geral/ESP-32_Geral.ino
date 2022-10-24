@@ -20,17 +20,19 @@
 #define pinCAM 26
 
 
-unsigned long sendDataPrevMillis = 0;
-float floatValue;                                                                 //Variáveis
+unsigned long sendDataPrevMillis = 0;                                                                //Variáveis
 bool signupOK = false;
-int output = 0;
+float floatValue = 0; 
+float output = 0;
 float outputPwm = 0;
-int outputPwm2 = 0;
+float humi = 0;
+float tempC = 0;
 int x = 0;
 int get1 = 0;
 int lumens = 0;
-float humi = 0;
-float tempC = 0;
+int cam = 0;
+int contCam = 501;
+int ajustePwm = 1;
 
 FirebaseData fbdo;
 FirebaseAuth auth;
@@ -90,11 +92,19 @@ void pinModePwm(int Pin, int setPin) {
 
 float pwmWriteSoft(float input, float output, float ajuste) {
   if (input > output) {
-    output = output + (1.00 / ajuste);
+    output = output + (255 / ((ajuste * 1000) / 10));
   }
 
   if (input < output) {
-    output = output - (1.00 / ajuste);
+    output = output - (255 / ((ajuste * 1000) / 10));
+  }
+
+  if (output < 0) {
+    output = 0;
+  }
+
+  if (output > 255) {
+    output = 255;
   }
   return output;
 }
@@ -140,6 +150,7 @@ void Task1code( void * pvParameters ) {
   for (;;) {
 
     lumens = map(analogRead(33), 0 , 4095, 255, 0);
+    cam = digitalRead(pinCAM);
 
     if ( isnan(dht_sensor.readTemperature()) || isnan(dht_sensor.readHumidity())) {
 
@@ -148,13 +159,23 @@ void Task1code( void * pvParameters ) {
       tempC = dht_sensor.readTemperature();
     }
 
-    outputPwm = pwmWriteSoft(get1, outputPwm, 1);
+    if (cam == 1) {
+      contCam = 0;
+    }
+
+    if (contCam < 500) {
+      cam = 1;
+      contCam++;
+    }
+
+    outputPwm = pwmWriteSoft(get1, outputPwm, ajustePwm);
     ledcWrite(0, outputPwm);
 
     SerialGeral("Saída do pwm para o led: ", String(outputPwm));
     SerialGeral("Entrada LDR: ", String(lumens));
     SerialGeral("Entrada temp: ", String(tempC));
     SerialGeral("Entrada humi: ", String(humi));
+    SerialGeral("Entrada CAM: ", String(cam));
 
     delay(10);
   }
@@ -166,7 +187,9 @@ void Task2code( void * pvParameters ) {
     FirebaseSet("/L1/temp", String(tempC));
     FirebaseSet("/L1/humi", String(humi));
     FirebaseSet("/L1/lumens", String(lumens));
+    FirebaseSet("/L1/motion", String(cam));
     get1 = FirebaseGet("/L1/number").toInt() * 2.55;
+    ajustePwm = FirebaseGet("/L1/ajuste").toInt();
 
     delay(2000);
   }
