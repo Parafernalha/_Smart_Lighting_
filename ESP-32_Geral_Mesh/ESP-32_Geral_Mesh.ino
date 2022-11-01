@@ -1,16 +1,11 @@
 #include <Arduino.h>
-#include <WiFi.h>
 #include <DHT.h>
-#include <Firebase_ESP_Client.h>
-#include <addons/TokenHelper.h>
-#include <addons/RTDBHelper.h>                                              //Inclusão de bibliotecas
+#include <Arduino_JSON.h>
+#include "painlessMesh.h"
 
-#define WIFI_SSID "Sky"                                                            // Rede
-#define WIFI_PASSWORD "51525354"                                                   // Senha da rede
-#define API_KEY "AIzaSyBqr0DXRi5J9T1JkWLteXZrz6uchfOCPXQ"                          // Firebase Key
-#define DATABASE_URL "https://jornadasextoperiodo-default-rtdb.firebaseio.com/"    // Firebase URL
-#define USER_EMAIL "kalebebm8@gmail.com"
-#define USER_PASSWORD "123456"
+#define   MESH_PREFIX     "Sky" //name for your MESH
+#define   MESH_PASSWORD   "51525354" //password for your MESH
+#define   MESH_PORT       5555 //default port
 
 #define DHT_SENSOR_PIN  32                                                         // DHT11 sensor pin X
 #define DHT_SENSOR_TYPE DHT11
@@ -19,6 +14,9 @@
 #define pinLDR 33
 #define pinCAM 26
 
+int nodeNumber = 1;
+
+String readings;
 
 unsigned long sendDataPrevMillis = 0;                                                                //Variáveis
 bool signupOK = false;
@@ -34,56 +32,18 @@ int cam = 0;
 int contCam = 501;
 int ajustePwm = 1;
 
-FirebaseData fbdo;
-FirebaseAuth auth;
-FirebaseConfig config;                                                              //Configurações do Firebase
-
 TaskHandle_t Task1;
 TaskHandle_t Task2;
 
 DHT dht_sensor(DHT_SENSOR_PIN, DHT_SENSOR_TYPE);                                    //Configurações DHT11
 
-void connectWifi() {                                                                // Função de conecção do Wifi
-  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-  while (WiFi.status() != WL_CONNECTED) {
-    Serial.print(".");
-    delay(300);
-  }
-  Serial.println(WiFi.localIP());
-}
+Scheduler userScheduler; 
+painlessMesh  mesh;
 
+void sendMessage() ; 
+String getReadings(); 
 
-void connectFirebase() {                                                            // Função de conecção do Firebase
-  Serial.printf("Firebase Client v%s\n\n", FIREBASE_CLIENT_VERSION);
-
-  config.api_key = API_KEY;
-  auth.user.email = USER_EMAIL;
-  auth.user.password = USER_PASSWORD;
-  config.database_url = DATABASE_URL;
-  config.token_status_callback = tokenStatusCallback;
-
-  fbdo.setResponseSize(2048);
-
-  Firebase.begin(&config, &auth);
-  Firebase.reconnectWiFi(true);
-  Firebase.setDoubleDigits(5);
-
-  config.timeout.serverResponse = 10 * 1000;
-  Serial.printf("Firebase Client v%s\n\n", FIREBASE_CLIENT_VERSION);
-}
-
-
-String FirebaseGet(String caminho) {                                               // Função Leitura do Firebase
-  if (Firebase.RTDB.getString(&fbdo, caminho)) {
-    return fbdo.to<const char *>();
-  }
-}
-
-
-void FirebaseSet(String caminho, String Value) {                                  // Função Escrita do Firebase
-  if (Firebase.RTDB.setString(&fbdo, caminho, Value)) {}
-}
-
+Task taskSendMessage(TASK_SECOND * 5 , TASK_FOREVER, &sendMessage);
 
 void pinModePwm(int Pin, int setPin) {
   ledcSetup(setPin, 5000, 8);
@@ -117,15 +77,58 @@ void SerialGeral(String text, String var1) {
   Serial.println(var1);
 }
 
+String getReadings () {
+  JSONVar jsonReadings;
+  jsonReadings["node"] = nodeNumber;
+  jsonReadings["temp"] = 30;
+  jsonReadings["hum"] = 31;
+  jsonReadings["pres"] = 32;
+  readings = JSON.stringify(jsonReadings);
+  return readings;
+}
+
+void sendMessage () {
+  String msg = getReadings();
+  mesh.sendBroadcast(msg);
+}
+
+void receivedCallback( uint32_t from, String &msg ) {
+  Serial.printf("Received from %u msg=%s\n", from, msg.c_str());
+  JSONVar myObject = JSON.parse(msg.c_str());
+  int node = myObject["node"];
+  double temp = myObject["temp"];
+  double hum = myObject["hum"];
+  double pres = myObject["pres"];
+  Serial.print("Node: ");
+  Serial.println(node);
+  Serial.print("Temperature: ");
+  Serial.print(temp);
+  Serial.println(" C");
+  Serial.print("Humidity: ");
+  Serial.print(hum);
+  Serial.println(" %");
+  Serial.print("Pressure: ");
+  Serial.print(pres);
+  Serial.println(" hpa");
+}
 
 void setup() {
   Serial.begin(115200);
   dht_sensor.begin();
-  connectWifi();
-  connectFirebase();
   pinModePwm(pinLed, 0);  // pin Led
   pinMode(pinLDR, INPUT); // pin LDR
   pinMode(pinCAM, INPUT); // pin CAM
+
+  mesh.setDebugMsgTypes( ERROR | STARTUP );
+  mesh.init( MESH_PREFIX, MESH_PASSWORD, &userScheduler, MESH_PORT );
+  mesh.onReceive(&receivedCallback);
+  
+  /*mesh.onNewConnection(&newConnectionCallback);
+  mesh.onChangedConnections(&changedConnectionCallback);
+  mesh.onNodeTimeAdjusted(&nodeTimeAdjustedCallback);*/
+  
+  userScheduler.addTask(taskSendMessage);
+  taskSendMessage.enable();
 
   xTaskCreatePinnedToCore(
     Task1code,   /* Task function. */
@@ -186,13 +189,8 @@ void Task1code( void * pvParameters ) {
 void Task2code( void * pvParameters ) {
   for (;;) {
 
-    FirebaseSet("/L1/temp", String(tempC));
-    FirebaseSet("/L1/humi", String(humi));
-    FirebaseSet("/L1/lumens", String(lumens));
-    FirebaseSet("/L1/motion", String(cam));
-    get1 = FirebaseGet("/L1/number").toInt() * 2.55;
-    ajustePwm = FirebaseGet("/L1/ajuste").toInt();
-
+    mesh.update();
+    
     delay(2000);
   }
 }

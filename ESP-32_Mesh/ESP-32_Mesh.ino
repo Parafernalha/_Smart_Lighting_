@@ -5,7 +5,7 @@
 #define   MESH_PASSWORD   "51525354" //password for your MESH
 #define   MESH_PORT       5555 //default port
 
-int nodeNumber = 3;
+int nodeNumber = 1;
 
 String readings;
 
