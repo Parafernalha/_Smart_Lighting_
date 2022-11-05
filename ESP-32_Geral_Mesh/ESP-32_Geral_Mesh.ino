@@ -12,44 +12,51 @@
 #define pinLDR 33
 #define pinCAM 26
 
-unsigned long sendDataPrevMillis = 0;                                                                //Variáveis
-bool signupOK = false;
+int Luminaria = 1;
+
 float floatValue = 0;
 float output = 0;
 float outputPwm = 0;
 float humi = 0;
 float tempC = 0;
 int x = 0;
-int get1 = 255;
 int lumens = 0;
 int cam = 0;
-int contCam = 501;
-int ajustePwm = 1;
-String mensagem = "";
-int getL1 = 0;
-int getHumi = 0;
-int getTemp = 0;
-int getLumens = 0;
-int getEfic = 0;
+int contCam = 10000;
+int tempoCam = 5;
+String mensagemEnviada = "";
+String mensagemRecebida = "";
+
+//Gets do Firebase
+int getTxRx = 0;
+int getLuminaria = 0;
+int getModo = 0;
+int getModoLumens = 0;
+int getModoCam = 0;
+int getIntensidade = 0;
+int getTempoTransicao = 0;
+int getAjusteMin = 0;
+int getAjusteMax = 0;
+int getAjusteLumens = 0;
+int getTempoMovimento = 0;
 
 Scheduler userScheduler;
 painlessMesh  mesh;
 
 void sendMessage() ;
 
-Task taskSendMessage( TASK_SECOND * 1 , TASK_FOREVER, &sendMessage );
+Task taskSendMessage( TASK_SECOND * 3 , TASK_FOREVER, &sendMessage );
 
 DHT dht_sensor(DHT_SENSOR_PIN, DHT_SENSOR_TYPE);
 
 void sendMessage() {
-  String msg = mensagem;
-  //msg += mesh.getNodeId();
+  String msg = mensagemEnviada;
   mesh.sendBroadcast( msg );
-  taskSendMessage.setInterval(TASK_SECOND * 1);
+  taskSendMessage.setInterval(TASK_SECOND * 3);
 }
 
 void receivedCallback( uint32_t from, String &msg ) {
-  Serial.printf("startHere: Received from %u msg=%s\n", from, msg.c_str());
+  mensagemRecebida = msg.c_str();
 
 }
 
@@ -78,6 +85,19 @@ float pwmWriteSoft(float input, float output, float ajuste) {
   return output;
 }
 
+void funcaoConcatenaMensagem() {
+  mensagemEnviada = ("0.");
+  mensagemEnviada += ("1.");
+  mensagemEnviada += (int(tempC));
+  mensagemEnviada += (".");
+  mensagemEnviada += (int(humi));
+  mensagemEnviada += (".");
+  mensagemEnviada += (lumens);
+  mensagemEnviada += (".");
+  mensagemEnviada += (cam);
+  mensagemEnviada += (".");
+}
+
 void setup() {
   Serial.begin(115200);
   dht_sensor.begin();
@@ -99,68 +119,112 @@ void loop() {
 
   mesh.update();
 
-  lumens = map(analogRead(33), 0 , 4095, 255, 0);
+  lumens = map(analogRead(33), 0 , 4095, getAjusteLumens, 0);
   cam = digitalRead(pinCAM);
-
-  if ( isnan(dht_sensor.readTemperature()) || isnan(dht_sensor.readHumidity())) {
-
-  } else {
-    humi  = dht_sensor.readHumidity();
-    tempC = dht_sensor.readTemperature();
-  }
+  humi  = dht_sensor.readHumidity();
+  tempC = dht_sensor.readTemperature();
 
   if (cam == 1) {
     contCam = 0;
   }
 
-  if (contCam < 500) {
+  if (contCam < tempoCam * 100) {
     cam = 1;
     contCam++;
   }
 
-  outputPwm = pwmWriteSoft(get1, outputPwm, ajustePwm);
-  ledcWrite(0, outputPwm);
-
-
-  mensagem = ("L1.");
-  mensagem += (int(tempC));
-  mensagem += (".");
-  mensagem += (int(humi));
-  mensagem += (".");
-  mensagem += (lumens);
-  mensagem += (".");
-  mensagem += (cam);
-  mensagem += (".");
+  funcaoConcatenaMensagem();
 
   int y = 0;
-  int cont = 0;
-  for (int x = 0; x < mensagem.length(); x++) {
-    if (mensagem.substring(x, x + 1) == ".") {
-      if (cont == 0) {
-        getL1 = (mensagem.substring(y + 1, x)).toInt();
-      }
+  int cont = 1;
+  for (int x = 0; x < mensagemRecebida.length(); x++) {
+    if (mensagemRecebida.substring(x, x + 1) == ".") {
       if (cont == 1) {
-        getHumi = (mensagem.substring(y + 1, x)).toInt();
+        getTxRx = (mensagemRecebida.substring(y, x)).toInt();
       }
-      if (cont == 2) {
-        getTemp = (mensagem.substring(y + 1, x)).toInt();
-      }
-      if (cont == 3) {
-        getLumens = (mensagem.substring(y + 1, x)).toInt();
-      }
-      if (cont == 4) {
-        getEfic = (mensagem.substring(y + 1, x)).toInt();
+      if (getTxRx == 1) {
+        if (cont == 2) {
+          getLuminaria = (mensagemRecebida.substring(y + 1, x)).toInt();
+        }
+        if (Luminaria == getLuminaria) {
+          if (cont == 3) {
+            getModo = (mensagemRecebida.substring(y + 1, x)).toInt();
+          }
+          if (cont == 4) {
+            getModoLumens = (mensagemRecebida.substring(y + 1, x)).toInt();
+          }
+          if (cont == 5) {
+            getModoCam = (mensagemRecebida.substring(y + 1, x)).toInt();
+          }
+          if (cont == 6) {
+            getIntensidade = (mensagemRecebida.substring(y + 1, x)).toInt();
+          }
+          if (cont == 7) {
+            getTempoTransicao = (mensagemRecebida.substring(y + 1, x)).toInt();
+          }
+          if (cont == 8) {
+            getAjusteMin = (mensagemRecebida.substring(y + 1, x)).toInt();
+          }
+          if (cont == 9) {
+            getAjusteMax = (mensagemRecebida.substring(y + 1, x)).toInt();
+          }
+          if (cont == 10) {
+            getAjusteLumens = (mensagemRecebida.substring(y + 1, x)).toInt();
+          }
+          if (cont == 11) {
+            getTempoMovimento = (mensagemRecebida.substring(y + 1, x)).toInt();
+          }
+        }
       }
       cont++;
       y = x;
     }
   }
 
-  Serial.printf("L = %.1d\n", getL1);
-  Serial.printf("Umidade = %.1d\n", getHumi);
-  Serial.printf("Temperatura = %.1d\n", getTemp);
-  Serial.printf("Lumens = %.1d\n", getLumens);
-  Serial.printf("Eficiencia = %.1d\n", getEfic);
+  if (getModo == 0) {
+    outputPwm = pwmWriteSoft(getIntensidade, outputPwm, getTempoTransicao);
+  } else {
+    if ((getModoLumens == 1 && outputPwm >= lumens && cam == 0) || (getModoLumens == 0 && getModoCam == 1 && cam == 0)) {
+      outputPwm = outputPwm - (getAjusteMax - getAjusteMin) / ((getTempoTransicao * 1000) / 10);
+    }
+    if (getModoLumens == 1 && outputPwm <= lumens) {
+      outputPwm = outputPwm + (getAjusteMax - getAjusteMin) / ((getTempoTransicao * 1000) / 10);
+    }
+    if (getModoCam == 1 && cam == 1) {
+      outputPwm = outputPwm + (getAjusteMax - getAjusteMin) / ((getTempoTransicao * 1000) / 10);
+    }
+  }
+
+  if (outputPwm < getAjusteMin) {
+    outputPwm = getAjusteMin;
+  }
+  if (outputPwm > getAjusteMax) {
+    outputPwm = getAjusteMax;
+  }
+
+  ledcWrite(0, outputPwm);
+
+  if (mensagemRecebida == "" || mensagemRecebida == "null") {
+
+  } else {
+    Serial.println(mensagemRecebida);
+    mensagemRecebida = "";
+  }
+  
+  /*
+    Serial.printf("getTxRx = %.1d\n", getTxRx);
+    Serial.printf("getLuminaria = %.1d\n", getLuminaria);
+    Serial.printf("getModo = %.1d\n", getModo);
+    Serial.printf("getModoLumens = %.1d\n", getModoLumens);
+    Serial.printf("getModoCam = %.1d\n", getModoCam);
+    Serial.printf("getIntensidade = %.1d\n", getIntensidade);
+    Serial.printf("getTempoTransicao = %.1d\n", getTempoTransicao);
+    Serial.printf("getAjusteMin = %.1d\n", getAjusteMin);
+    Serial.printf("getAjusteMax = %.1d\n", getAjusteMax);
+    Serial.printf("getAjusteLumens = %.1d\n", getAjusteLumens);
+    Serial.printf("getTempoMovimento = %.1d\n", getTempoMovimento);
+  */
+  //Serial.printf("%.1d.L%.1d.%.1d.%.1d.%.1d.%.1d.%.1d.%.1d.%.1d.%.1d.%.1d\n", getTxRx, getLuminaria, getModo, getModoLumens, getModoCam, getIntensidade, getTempoTransicao, getAjusteMin, getAjusteMax, getAjusteLumens, getTempoMovimento);
 
   delay(10);
 }
