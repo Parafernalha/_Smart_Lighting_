@@ -15,7 +15,7 @@ void sendMessage() ;
 Task taskSendMessage( TASK_SECOND * 3 , TASK_FOREVER, &sendMessage );
 
 void sendMessage() {
-  String msg = mensagemEnviada; //"1.1.0.0.0.255.1.1.255.255.1."; // 1rx ou tx, 2luminaria, 3modo, 4adaptar, 5movimento, 6intencidadePWM, 7tempoTransição, 8ajusteMin, 9ajusteMax, 10ajusteLumens, 11tempoMovimento
+  String msg = mensagemEnviada; //"1.1.1.0.1.255.3.0.255.255.5."; // 1rx ou tx, 2luminaria, 3modo, 4adaptar, 5movimento, 6intencidadePWM, 7tempoTransição, 8ajusteMin, 9ajusteMax, 10ajusteLumens, 11tempoMovimento
   mesh.sendBroadcast( msg );
   taskSendMessage.setInterval(TASK_SECOND * 3);
 }

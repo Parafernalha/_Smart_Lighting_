@@ -23,20 +23,19 @@ int x = 0;
 int lumens = 0;
 int cam = 0;
 int contCam = 10000;
-int tempoCam = 5;
 String mensagemEnviada = "";
 String mensagemRecebida = "";
 
 //Gets do Firebase
 int getTxRx = 0;
 int getLuminaria = 0;
-int getModo = 0;
-int getModoLumens = 0;
+int getModo = 1;
+int getModoLumens = 1;
 int getModoCam = 0;
 int getIntensidade = 0;
-int getTempoTransicao = 0;
+int getTempoTransicao = 1;
 int getAjusteMin = 0;
-int getAjusteMax = 0;
+int getAjusteMax = 255;
 int getAjusteLumens = 0;
 int getTempoMovimento = 0;
 
@@ -57,7 +56,6 @@ void sendMessage() {
 
 void receivedCallback( uint32_t from, String &msg ) {
   mensagemRecebida = msg.c_str();
-
 }
 
 void pinModePwm(int Pin, int setPin) {
@@ -128,7 +126,7 @@ void loop() {
     contCam = 0;
   }
 
-  if (contCam < tempoCam * 100) {
+  if (contCam < getTempoMovimento * 100) {
     cam = 1;
     contCam++;
   }
@@ -185,21 +183,17 @@ void loop() {
     outputPwm = pwmWriteSoft(getIntensidade, outputPwm, getTempoTransicao);
   } else {
     if ((getModoLumens == 1 && outputPwm >= lumens && cam == 0) || (getModoLumens == 0 && getModoCam == 1 && cam == 0)) {
-      outputPwm = outputPwm - (getAjusteMax - getAjusteMin) / ((getTempoTransicao * 1000) / 10);
+      outputPwm = outputPwm - 255.0000 / ((getTempoTransicao * 1000) / 10);
     }
-    if (getModoLumens == 1 && outputPwm <= lumens) {
-      outputPwm = outputPwm + (getAjusteMax - getAjusteMin) / ((getTempoTransicao * 1000) / 10);
+    if (getModoLumens == 1 && outputPwm <= lumens || getModoCam == 1 && cam == 1) {
+      outputPwm = outputPwm + 255.0000 / ((getTempoTransicao * 1000) / 10);
     }
-    if (getModoCam == 1 && cam == 1) {
-      outputPwm = outputPwm + (getAjusteMax - getAjusteMin) / ((getTempoTransicao * 1000) / 10);
+    if (outputPwm < getAjusteMin) {
+      outputPwm = getAjusteMin;
     }
-  }
-
-  if (outputPwm < getAjusteMin) {
-    outputPwm = getAjusteMin;
-  }
-  if (outputPwm > getAjusteMax) {
-    outputPwm = getAjusteMax;
+    if (outputPwm > getAjusteMax) {
+      outputPwm = getAjusteMax;
+    }
   }
 
   ledcWrite(0, outputPwm);
@@ -207,23 +201,15 @@ void loop() {
   if (mensagemRecebida == "" || mensagemRecebida == "null") {
 
   } else {
-    Serial.println(mensagemRecebida);
+    //Serial.println(mensagemRecebida);
     mensagemRecebida = "";
   }
-  
-  /*
-    Serial.printf("getTxRx = %.1d\n", getTxRx);
-    Serial.printf("getLuminaria = %.1d\n", getLuminaria);
-    Serial.printf("getModo = %.1d\n", getModo);
-    Serial.printf("getModoLumens = %.1d\n", getModoLumens);
-    Serial.printf("getModoCam = %.1d\n", getModoCam);
-    Serial.printf("getIntensidade = %.1d\n", getIntensidade);
-    Serial.printf("getTempoTransicao = %.1d\n", getTempoTransicao);
-    Serial.printf("getAjusteMin = %.1d\n", getAjusteMin);
-    Serial.printf("getAjusteMax = %.1d\n", getAjusteMax);
-    Serial.printf("getAjusteLumens = %.1d\n", getAjusteLumens);
-    Serial.printf("getTempoMovimento = %.1d\n", getTempoMovimento);
-  */
+
+  if (Serial.available() > 0) {
+    mensagemRecebida = Serial.readString();
+    Serial.println(mensagemEnviada);
+  }
+
   //Serial.printf("%.1d.L%.1d.%.1d.%.1d.%.1d.%.1d.%.1d.%.1d.%.1d.%.1d.%.1d\n", getTxRx, getLuminaria, getModo, getModoLumens, getModoCam, getIntensidade, getTempoTransicao, getAjusteMin, getAjusteMax, getAjusteLumens, getTempoMovimento);
 
   delay(10);
