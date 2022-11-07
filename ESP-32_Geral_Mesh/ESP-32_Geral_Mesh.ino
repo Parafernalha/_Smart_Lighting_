@@ -1,19 +1,26 @@
-#include <DHT.h>
-#include "painlessMesh.h"
+#include "DHT.h"
+#include <Adafruit_Sensor.h>
+#include <Wire.h>
+#include <BH1750.h>
+BH1750 lightMeter;
+#include "painlessMesh.h" //biblioteca "painlessmesh"
 
-#define   MESH_PREFIX     "ESPMESH2022"
-#define   MESH_PASSWORD   "51525354"
-#define   MESH_PORT       5555
+#define   MESH_PREFIX     "ESPMESH2022"  //Rede MESH
+#define   MESH_PASSWORD   "51525354"  //Senha da rede
+#define   MESH_PORT       5555 //Porta de comunicação da rede
 
-#define DHT_SENSOR_PIN  32 // DHT11 sensor pin X
-#define DHT_SENSOR_TYPE DHT11
+#define DHT_SENSOR_PIN  27 //Sensor DHT Pino
+#define DHT_SENSOR_TYPE DHT22 //Modelo do DHT
 
-#define pinLed 27
-#define pinLDR 33
-#define pinCAM 26
-
+#define pinLed 32 //Led Pino
+#define pinLDR 33 //Sensor LDR Pino
+#define pinCAM 26 //CAM Pino
+//Luminária
 int Luminaria = 1;
 
+//Variaveis
+float lux = 0;
+float valorAjuste = 1;
 float floatValue = 0;
 float output = 0;
 float outputPwm = 0;
@@ -36,7 +43,7 @@ int getIntensidade = 0;
 int getTempoTransicao = 1;
 int getAjusteMin = 0;
 int getAjusteMax = 255;
-int getAjusteLumens = 0;
+int getAjusteLumens = 255;
 int getTempoMovimento = 0;
 
 Scheduler userScheduler;
@@ -85,12 +92,13 @@ float pwmWriteSoft(float input, float output, float ajuste) {
 
 void funcaoConcatenaMensagem() {
   mensagemEnviada = ("0.");
-  mensagemEnviada += ("1.");
+  mensagemEnviada += (Luminaria);
+  mensagemEnviada += (".");
   mensagemEnviada += (int(tempC));
   mensagemEnviada += (".");
   mensagemEnviada += (int(humi));
   mensagemEnviada += (".");
-  mensagemEnviada += (lumens);
+  mensagemEnviada += (int(lux));
   mensagemEnviada += (".");
   mensagemEnviada += (cam);
   mensagemEnviada += (".");
@@ -98,7 +106,10 @@ void funcaoConcatenaMensagem() {
 
 void setup() {
   Serial.begin(115200);
+
   dht_sensor.begin();
+  Wire.begin();
+  lightMeter.begin();
 
   pinModePwm(pinLed, 0);  // pin Led
   pinMode(pinLDR, INPUT); // pin LDR
@@ -117,7 +128,8 @@ void loop() {
 
   mesh.update();
 
-  lumens = map(analogRead(33), 0 , 4095, getAjusteLumens, 0);
+  lux = lightMeter.readLightLevel();
+  lumens = map(lux, 0 , 1000, getAjusteLumens, 0);
   cam = digitalRead(pinCAM);
   humi  = dht_sensor.readHumidity();
   tempC = dht_sensor.readTemperature();
@@ -201,7 +213,7 @@ void loop() {
   if (mensagemRecebida == "" || mensagemRecebida == "null") {
 
   } else {
-    //Serial.println(mensagemRecebida);
+    Serial.println(mensagemRecebida);
     mensagemRecebida = "";
   }
 
@@ -210,7 +222,14 @@ void loop() {
     Serial.println(mensagemEnviada);
   }
 
-  //Serial.printf("%.1d.L%.1d.%.1d.%.1d.%.1d.%.1d.%.1d.%.1d.%.1d.%.1d.%.1d\n", getTxRx, getLuminaria, getModo, getModoLumens, getModoCam, getIntensidade, getTempoTransicao, getAjusteMin, getAjusteMax, getAjusteLumens, getTempoMovimento);
+  Serial.print("TEMPERATURA: ");
+  Serial.println(tempC);
+  Serial.print("HUMIDADE: ");
+  Serial.println(humi);
+  Serial.print("LUZ: ");
+  Serial.println(lux);
+  Serial.print("CAM: ");
+  Serial.println(cam);
 
   delay(10);
 }
