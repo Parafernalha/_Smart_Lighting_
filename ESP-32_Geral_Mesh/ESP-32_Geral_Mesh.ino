@@ -1,9 +1,11 @@
+#include "painlessMesh.h" //biblioteca "painlessmesh"
 #include "DHT.h"
 #include <Adafruit_Sensor.h>
 #include <Wire.h>
 #include <BH1750.h>
+#include <EEPROM.h>
 BH1750 lightMeter;
-#include "painlessMesh.h" //biblioteca "painlessmesh"
+
 
 #define   MESH_PREFIX     "ESPMESH2022"  //Rede MESH
 #define   MESH_PASSWORD   "51525354"  //Senha da rede
@@ -44,7 +46,7 @@ int getTempoTransicao = 1;
 int getAjusteMin = 0;
 int getAjusteMax = 255;
 int getAjusteLumens = 255;
-int getTempoMovimento = 0;
+int getTempoMovimento = 5;
 
 Scheduler userScheduler;
 painlessMesh  mesh;
@@ -122,6 +124,8 @@ void setup() {
 
   userScheduler.addTask( taskSendMessage );
   taskSendMessage.enable();
+
+  mensagemRecebida = EEPROM.read(0);
 }
 
 void loop() {
@@ -214,6 +218,7 @@ void loop() {
 
   } else {
     Serial.println(mensagemRecebida);
+    EEPROM.write(0, mensagemRecebida);
     mensagemRecebida = "";
   }
 
