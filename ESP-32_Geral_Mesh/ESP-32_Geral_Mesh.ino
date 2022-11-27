@@ -3,7 +3,6 @@
 #include <Adafruit_Sensor.h>
 #include <Wire.h>
 #include <BH1750.h>
-#include <EEPROM.h>
 BH1750 lightMeter;
 
 
@@ -124,8 +123,6 @@ void setup() {
 
   userScheduler.addTask( taskSendMessage );
   taskSendMessage.enable();
-
-  mensagemRecebida = EEPROM.read(0);
 }
 
 void loop() {
@@ -218,7 +215,6 @@ void loop() {
 
   } else {
     Serial.println(mensagemRecebida);
-    EEPROM.write(0, mensagemRecebida);
     mensagemRecebida = "";
   }
 

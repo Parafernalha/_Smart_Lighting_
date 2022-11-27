@@ -13,7 +13,7 @@ int contagemMax_AjusteCam = 50;
 void setup() {
   delay(4000);
   Serial.begin(115200);
-  //pinMode(4, OUTPUT); //led
+  pinMode(4, OUTPUT); //led
   pinMode(12, OUTPUT);
 
   camera.setHighFreq(); // Ative a alta frequência para velocidade de transmissão rápida
@@ -30,7 +30,7 @@ void setup() {
 void loop() {
   detector.setPixelChangesThreshold(sensibilidade_AjusteCam); // Acionar o movimento quando pelo menos 10% dos pixels mudam de intensidade
   detector.setIntensityChangeThreshold(10); // Sensibilidade considerando pelo menos 5 de 255 por pixel
-  
+
   if (!camera.capture()) { // Confere se a camera está funcionando
     Serial.println(camera.getErrorMessage());
     delay(1000);
@@ -42,7 +42,7 @@ void loop() {
 
   camera.image.resize<largura_Cam, altura_Cam>(); // Realizar detecção de movimento em imagem redimensionada para detecção rápida
   detector.update(camera.image);
-  
+
   if (contagem_AjusteCam < contagemMax_AjusteCam) {
     Serial.println(contagem_AjusteCam);
     contagem_AjusteCam++;
@@ -50,6 +50,11 @@ void loop() {
   else if (contagem_AjusteCam < contagemMax_AjusteCam + 1) {
     sensibilidade_AjusteCam = sensibilidade_AjusteCam + 0.01;
     contagem_AjusteCam++;
+  }
+  if (contagem_AjusteCam == contagemMax_AjusteCam)
+  {
+    digitalWrite(4, HIGH);
+    delay(50);
   }
 
   if (detector.isMotionDetected()) {   // Se for detectado movimento, imprima as coordenadas para serial no formato JSON
