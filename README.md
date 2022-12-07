@@ -21,6 +21,6 @@ Develop a proof of concept (POC) of a smart light fixture, which funcionalities 
 
 
 <img src="https://github.com/Parafernalha/_Smart_Lighting_/blob/main/Apprenticeship%20Journey/images/supervisorio.png" alt="challenge 1">
-<img src="https://raw.githubusercontent.com/Parafernalha/table-challenges/main/images/desafio-dois.png" alt="challenge 1" >
-<img src="https://github.com/Parafernalha/table-challenges/blob/main/images/exercicio-escopos-grupo.png" alt="exercicio" >
-<img src="https://raw.githubusercontent.com/Parafernalha/table-challenges/main/images/desafio-quatro.png" alt="challenge 2" >
+<img src="https://github.com/Parafernalha/_Smart_Lighting_/blob/main/Apprenticeship%20Journey/images/image8.jpg" alt="challenge 1" >
+<img src="hhttps://github.com/Parafernalha/_Smart_Lighting_/blob/main/Apprenticeship%20Journey/images/image9.jpg" alt="exercicio" >
+<img src="https://github.com/Parafernalha/_Smart_Lighting_/blob/main/Apprenticeship%20Journey/images/image10.jpg" alt="challenge 2" >
