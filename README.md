@@ -20,7 +20,7 @@ Develop a proof of concept (POC) of a smart light fixture, which funcionalities 
 - Compatibility: The devices were able to control lighting devices made by another manufactures using a 0-10V analog converter.
 
 
-<img src="https://github.com/Parafernalha/_Smart_Lighting_/Apprenticeship Journey/images/supervisorio" alt="challenge 1">
+<img src="https://github.com/Parafernalha/_Smart_Lighting_/blob/main/Apprenticeship%20Journey/images/supervisorio.png" alt="challenge 1">
 <img src="https://raw.githubusercontent.com/Parafernalha/table-challenges/main/images/desafio-dois.png" alt="challenge 1" >
 <img src="https://github.com/Parafernalha/table-challenges/blob/main/images/exercicio-escopos-grupo.png" alt="exercicio" >
 <img src="https://raw.githubusercontent.com/Parafernalha/table-challenges/main/images/desafio-quatro.png" alt="challenge 2" >
